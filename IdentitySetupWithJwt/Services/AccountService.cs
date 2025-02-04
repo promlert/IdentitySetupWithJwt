@@ -1,4 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,6 +16,7 @@ namespace IdentitySetupWithJwt.Services;
 
 public interface IAccountService
 {
+    Task<MethodResult<bool>> ConfirmEmailAsync(string email, string emailToken);
     Task<MethodResult<JwtTokenResponseVM>> LoginAsync(LoginVM loginVm);
     Task<MethodResult<JwtTokenResponseVM>> RefreshTokenAsync(string accessToken, string refreshToken);
     Task<MethodResult<RegisterVM>> RegisterAsync(RegisterVM registerVm);
@@ -25,13 +28,22 @@ public class AccountService : IAccountService
     private readonly SymmetricSecurityKey _key;
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly SmtpConfig _smtpConfig;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AccountService(IOptions<JwtConfig> jwtConfigOptions, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+    public AccountService(
+        IOptions<JwtConfig> jwtConfigOptions,
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        IOptions<SmtpConfig> smtpConfigOptions,
+        IHttpContextAccessor httpContextAccessor)
     {
         _jwtConfig = jwtConfigOptions.Value;
         _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.SecretKey));
         _userManager = userManager;
         _signInManager = signInManager;
+        _smtpConfig = smtpConfigOptions.Value;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<MethodResult<JwtTokenResponseVM>> LoginAsync(LoginVM loginVm)
@@ -42,6 +54,10 @@ public class AccountService : IAccountService
             return new MethodResult<JwtTokenResponseVM>.Failure("Invalid Email Or Password");
         }
         var result = await _signInManager.CheckPasswordSignInAsync(user, loginVm.Password, false);
+        if (result.IsNotAllowed)
+        {
+            return new MethodResult<JwtTokenResponseVM>.Failure("Email Not Confirmed");
+        }
         if (!result.Succeeded)
         {
             return new MethodResult<JwtTokenResponseVM>.Failure("Invalid Email Or Password");
@@ -54,7 +70,7 @@ public class AccountService : IAccountService
             new(ClaimTypes.Name, user.UserName ?? ""),
             new(ClaimTypes.NameIdentifier, user.Id),
         };
-            
+
         return await CreateTokenAsync(claims, user);
     }
 
@@ -65,19 +81,20 @@ public class AccountService : IAccountService
             Email = registerVm.Email,
             UserName = registerVm.Email,
             FullName = registerVm.FullName,
-            EmailConfirmed = true,
+            EmailConfirmed = false,
             LockoutEnabled = false
         };
         var result = await _userManager.CreateAsync(user, registerVm.Password);
         if (!result.Succeeded)
         {
-            return new MethodResult<RegisterVM>.Failure("Failed To Register");
+            return new MethodResult<RegisterVM>.Failure(string.Join(',', result.Errors.Select(e => e.Description)));
         }
         var resultRoleCreation = await _userManager.AddToRoleAsync(user, ApplicationConstants.RolesTypes.User);
         if (!resultRoleCreation.Succeeded)
         {
-            return new MethodResult<RegisterVM>.Failure("Failed To Register");
+            return new MethodResult<RegisterVM>.Failure(string.Join(',', resultRoleCreation.Errors.Select(e => e.Description)));
         }
+        await SendVerificationEmail(user);
         return new MethodResult<RegisterVM>.Success(registerVm);
     }
 
@@ -85,6 +102,21 @@ public class AccountService : IAccountService
         await GetPrincipalFromExpiredToken(accessToken).Bind(
             r => GetToken(refreshToken, r)
         );
+
+    public async Task<MethodResult<bool>> ConfirmEmailAsync(string email, string emailToken)
+    {
+        AppUser? user = await _userManager.FindByEmailAsync(email);
+        if (user != null)
+        {
+            var result = await _userManager.ConfirmEmailAsync(user, emailToken);
+            if (!result.Succeeded)
+            {
+                return new MethodResult<bool>.Failure(string.Join(',', result.Errors.Select(e => e.Description)));
+            }
+            return new MethodResult<bool>.Success(true);
+        }
+        return new MethodResult<bool>.Failure("Error While Confirming Email");
+    }
 
     private async Task<MethodResult<JwtTokenResponseVM>> GetToken(string refreshToken, ClaimsPrincipal result)
     {
@@ -131,6 +163,7 @@ public class AccountService : IAccountService
             RefreshTokenExpiresIn = (int)refreshTokenExpiryTimeStamp.Subtract(DateTime.UtcNow).TotalSeconds
         });
     }
+
     private MethodResult<ClaimsPrincipal> GetPrincipalFromExpiredToken(string accessToken)
     {
         var tokenValidationParameters = new TokenValidationParameters
@@ -156,6 +189,7 @@ public class AccountService : IAccountService
             return new MethodResult<ClaimsPrincipal>.Failure("Invalid Token");
         return new MethodResult<ClaimsPrincipal>.Success(principal);
     }
+
     private string GenerateRefreshToken()
     {
         var randomNumber = new byte[32];
@@ -165,6 +199,7 @@ public class AccountService : IAccountService
             return Convert.ToBase64String(randomNumber);
         }
     }
+
     private string GenerateAccessToken(IEnumerable<Claim> claims)
     {
         var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
@@ -181,5 +216,29 @@ public class AccountService : IAccountService
         var token = tokenHandler.CreateToken(tokenDescriptor);
         var accessToken = tokenHandler.WriteToken(token);
         return accessToken;
+    }
+
+    private async Task<bool> SendVerificationEmail(AppUser user)
+    {
+        var url = _httpContextAccessor.HttpContext?.Request.Host;
+        var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var passwordToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var verificationUrl = $"https://{url}/api/Account/ConfirmEmail?email={Uri.EscapeDataString(user.Email!)}&emailToken={Uri.EscapeDataString(emailToken)}";
+        using (MailMessage mail = new MailMessage())
+        {
+            mail.From = new MailAddress(ApplicationConstants.AdminAccount.Email);
+            mail.To.Add(user.Email!);
+            mail.Subject = "Activate Your Account";
+            mail.Body = $"<h4>Please click the following link to activate your account: <a href='{verificationUrl}'>Verify Me</a></h4>";
+            mail.IsBodyHtml = true;
+            using (SmtpClient smtp = new SmtpClient(_smtpConfig.Host, _smtpConfig.Port))
+            {
+                smtp.UseDefaultCredentials = false;
+                smtp.Credentials = new NetworkCredential(_smtpConfig.UserName, _smtpConfig.Password);
+                smtp.EnableSsl = true;
+                await smtp.SendMailAsync(mail);
+            }
+        }
+        return true;
     }
 }

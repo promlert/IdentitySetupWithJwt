@@ -7,8 +7,9 @@ namespace IdentitySetupWithJwt.Extensions
 {
     public static class AddAuthenticationWithJwtBearerExtension
     {
-        public static void AddAuthenticationWithJwtBearer(this IServiceCollection services, JwtConfig jwtConfig)
+        public static void AddAuthenticationWithJwtBearer(this IServiceCollection services, IConfiguration configuration)
         {
+            var jwtConfig = configuration.GetSection(nameof(JwtConfig)).Get<JwtConfig>() ?? throw new InvalidOperationException("JwtConfig Is Missing. Please Add Them In appSettings.json OR appSettings.Development.json");
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme =

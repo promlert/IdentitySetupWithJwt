@@ -13,7 +13,8 @@ namespace IdentitySetupWithJwt.Controllers
         [Authorize]
         public IActionResult GetDetails()
         {
-            return Ok("You are Authorized");
+            var user = HttpContext.User.Identity?.Name;
+            return Ok(new { message = $"Your Email/UserName Is {user}" });
         }
         [HttpGet]
         [AllowAnonymous]
@@ -28,11 +29,6 @@ namespace IdentitySetupWithJwt.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(LoginVM loginVM)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(errors);
-            }
             var result = await accountService.LoginAsync(loginVM);
             return result.Match(
                 l => Problem(detail: l, statusCode: StatusCodes.Status401Unauthorized),
@@ -43,16 +39,21 @@ namespace IdentitySetupWithJwt.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterVM registerVM)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(errors);
-            }
             var result = await accountService.RegisterAsync(registerVM);
             return result.Match(
                 l => Problem(detail: l, statusCode: StatusCodes.Status400BadRequest),
                 Ok
             );
+        }
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmEmail(string email, string emailToken)
+        {
+            var result = await accountService.ConfirmEmailAsync(email, emailToken);
+            return result.Match(
+                l => Problem(detail: l, statusCode: StatusCodes.Status400BadRequest),
+                r => Ok(new { message = "Email Confirmed" })
+                );
         }
     }
 }
