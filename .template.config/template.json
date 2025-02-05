@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Muhammad Ashar",
+  "classifications": ["Web", "WebAPI", "JWT", "Identity"],
+  "name": "JWT Identity Web API Template",
+  "identity": "IdentitySetupWithJwt.1.0",
+  "shortName": "identityjwt",
+  "groupIdentity": "IdentitySetupWithJwt",
+  "description": "A project template for creating an ASP.NET Core Web API with JWT authentication using ASP.NET Core Identity",
+  "tags": {
+    "language": "C#",
+    "type": "project",
+    "technology": ".NET"
+  },
+  "sourceName": "IdentitySetupWithJwt",
+  "preferNameDirectory": true,
+  "symbols": {
+    "Framework": {
+      "type": "parameter",
+      "description": "The target framework for the project.",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "net9.0"
+        }
+      ],
+      "defaultValue": "net9.0",
+      "replaces": "{TargetFramework}"
+    },
+    "HttpsPort": {
+      "type": "parameter",
+      "datatype": "integer",
+      "description": "Port number to use for HTTPS endpoint in launchSettings.json",
+      "defaultValue": "7145",
+      "replaces": "{HttpsPort}"
+    }
+  }
+}
+

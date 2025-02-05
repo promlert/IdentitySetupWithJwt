@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi.Models;
 
@@ -29,7 +29,7 @@ namespace IdentitySetupWithJwt.Extensions
             {
                 Title = "IdentitySetupWithJwt API",
                 Version = "1.0.0",
-                Description = "This API contains all endpoints for identity setup with JWT."
+                Description = "This is the description for IdentitySetupWithJwt API."
             };
             document.Info.Contact = new()
             {

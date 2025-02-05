@@ -1,6 +1,6 @@
-# Identity Setup with JWT in .NET 8
+# Identity Setup with JWT in .NET 9
 
-This repository contains a template for setting up JWT token authentication with ASP.NET Core Identity using Entity Framework Core in a .NET 8 Web API project. The template is designed to be imported into Visual Studio 2022 for quick and easy project initialization.
+This repository contains a template for setting up JWT token authentication with ASP.NET Core Identity using Entity Framework Core in a .NET 9 Web API project. The template is designed to be imported into Visual Studio 2022 for quick and easy project initialization.
 
 ## Features
 
@@ -17,7 +17,7 @@ This repository contains a template for setting up JWT token authentication with
 
 ### Prerequisites
 
-- **.NET 8 SDK:** Ensure you have the .NET 8 SDK installed on your machine.
+- **.NET 9 SDK:** Ensure you have the .NET 9 SDK installed on your machine.
 - **Visual Studio 2022:** The template is designed to be imported into Visual Studio 2022.
 
 ### Installation
