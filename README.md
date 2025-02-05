@@ -28,7 +28,7 @@ This repository contains a template for setting up JWT token authentication with
    - Now you will be able to see the template in the **Create New Project** menu.
 
 2. **Create a New Project:**
-   - In Visual Studio 2022, create a new project using the imported template.
+   - In Visual Studio 2022, create a new project using the installed template.
    - The project will be initialized with JWT authentication, Identity setup, and all other features.
 
 ### Project Structure
