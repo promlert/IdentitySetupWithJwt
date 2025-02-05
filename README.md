@@ -22,10 +22,9 @@ This repository contains a template for setting up JWT token authentication with
 
 ### Installation
 
-1. **Import the Template:**
-   - ```
-    dotnet new install IdentitySetupWithJwt::1.0.0
-   ```
+1. **Install the Template:**
+   - ``` dotnet new install IdentitySetupWithJwt::1.0.0 ```
+
    - Now you will be able to see the template in the **Create New Project** menu.
 
 2. **Create a New Project:**
