@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <PackageType>Template</PackageType>
+        <PackageVersion>1.0.2</PackageVersion>
+	<TargetFramework>net9.0</TargetFramework>
+        <PackageId>IdentitySetupWithJwt</PackageId>
+        <Title>IdentitySetupWithJwt</Title>
+        <Authors>Muhammad Ashar</Authors>
+        <Company>GhostCoders</Company>
+        <Product>IdentitySetupWithJwt</Product>
+        <Description>A project template for creating an ASP.NET Core Web API with JWT authentication using ASP.NET Core Identity</Description>
+        <PackageTags>c#;project;identity;jwt;.net;webapi;template</PackageTags>
+        <IncludeContentInPack>true</IncludeContentInPack>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <ContentTargetFolders>content</ContentTargetFolders>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>jwt.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RepositoryUrl>https://github.com/im-ashar/IdentitySetupWithJwt</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/im-ashar/IdentitySetupWithJwt</PackageProjectUrl>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="jwt.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Include="..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+       <Content Include="templates\**\*" Exclude="templates\**\bin\**;templates\**\obj\**;templates\**\.vs\**;templates\**\.git\**">
+            <PackagePath>content</PackagePath>
+        </Content>
+        <Compile Remove="**\*" />
+    </ItemGroup>
+</Project>

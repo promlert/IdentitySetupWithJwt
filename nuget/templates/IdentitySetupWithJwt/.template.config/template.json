@@ -10,8 +10,14 @@
   "tags": {
     "language": "C#",
     "type": "project",
-    "technology": ".NET"
+    "technology": ".NET",
+    "platform": ".NET",
+    "projectType": "webapi"
   },
+  "precedence": "9000",
+  "guids": [
+    "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"
+  ],
   "sourceName": "IdentitySetupWithJwt",
   "preferNameDirectory": true,
   "symbols": {
